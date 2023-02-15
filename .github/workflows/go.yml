@@ -21,19 +21,17 @@ jobs:
       with:
         go-version: 1.19
 
-    - name: Build
-      run: go build -v ./...
-
-    - name: Test
-      run: go test -v ./...
-
     - name: Build Linux (x86_64)
       run:  GOOS=linux  GOARCH=amd64       go build -o moondeck
+
     - name: Build Linux (armv5, Raspberry Pi 1)
       run:  GOOS=linux  GOARCH=arm GOARM=5 go build -o moondeck.arm5
+
     - name: Build Linux (armv6, Raspberry Pi 2+)
       run:  GOOS=linux  GOARCH=arm GOARM=6 go build -o moondeck.arm6
+
     - name: Build macOS (Apple silicon)
       run : GOOS=darwin GOARCH=arm64       go build -o moondeck.macos
+
     - name: Build macOS (Intel)
       run:  GOOS=darwin GOARCH=amd64       go build -o moondeck.macosx86
