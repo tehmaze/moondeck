@@ -12,10 +12,10 @@ import (
 	"golang.org/x/image/draw"
 
 	"maze.io/moondeck/gfx/blend"
+	"maze.io/moondeck/gfx/font"
+	"maze.io/moondeck/gfx/icon"
 	"maze.io/moondeck/gfx/sparkline"
 	"maze.io/moondeck/moondeck"
-	"maze.io/moondeck/moondeck/font"
-	"maze.io/moondeck/moondeck/icon"
 	"maze.io/moondeck/util"
 )
 
@@ -68,8 +68,8 @@ func NewTemperature(name string, app *moondeck.App, fg, bg color.RGBA) *Temperat
 		Name:      name,
 		Color:     icon.White,
 		ColorEdit: icon.Yellow,
-		up:        moondeck.NewIconWidget("arrow-up"),
-		dn:        moondeck.NewIconWidget("arrow-down"),
+		up:        moondeck.MustIconWidget("arrow-up"),
+		dn:        moondeck.MustIconWidget("arrow-down"),
 		edit: &moondeck.FloatWidget{
 			TextWidget: moondeck.TextWidget{
 				Font:       font.RobotoBold,

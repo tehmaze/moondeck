@@ -7,7 +7,7 @@ import (
 	"math"
 
 	"maze.io/moondeck/gfx/blend"
-	"maze.io/moondeck/moondeck/icon"
+	"maze.io/moondeck/gfx/icon"
 )
 
 type Sparkline struct {

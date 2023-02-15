@@ -8,9 +8,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/image/draw"
 
+	"maze.io/moondeck/gfx"
 	"maze.io/moondeck/gfx/blend"
+	"maze.io/moondeck/gfx/icon"
 	"maze.io/moondeck/moondeck"
-	"maze.io/moondeck/moondeck/icon"
 )
 
 const (
@@ -76,17 +77,17 @@ func (d *Dashboard) Run() error {
 }
 
 func pulsingIconWidget(name string) *moondeck.ImageWidget {
-	w := moondeck.NewIconWidget(name)
+	w := moondeck.MustIconWidget(name)
 
 	go func(w *moondeck.ImageWidget) {
 		icons := make([]*image.RGBA, 0, 10)
 		for p := float32(0.2); p <= 1.0; p += 0.2 {
 			c := toRGBAColor(blend.Gradient(color.Black, color.White, p))
-			icons = append(icons, icon.Colorize(w.Image, c, icon.Transparent))
+			icons = append(icons, gfx.Colorize(w.Image, c, icon.Transparent))
 		}
 		for p := float32(1.0); p >= 0.2; p -= 0.2 {
 			c := toRGBAColor(blend.Gradient(color.Black, color.White, p))
-			icons = append(icons, icon.Colorize(w.Image, c, icon.Transparent))
+			icons = append(icons, gfx.Colorize(w.Image, c, icon.Transparent))
 		}
 
 		j := -1

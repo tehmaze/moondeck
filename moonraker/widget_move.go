@@ -1,12 +1,16 @@
 package moonraker
 
 import (
-	"log"
+	"fmt"
 	"strconv"
+	"strings"
+	"sync"
 
+	log "github.com/sirupsen/logrus"
+
+	"maze.io/moondeck/gfx/font"
+	"maze.io/moondeck/gfx/icon"
 	"maze.io/moondeck/moondeck"
-	"maze.io/moondeck/moondeck/font"
-	"maze.io/moondeck/moondeck/icon"
 	"maze.io/moondeck/util"
 )
 
@@ -37,6 +41,7 @@ var moveStepSizes = []float64{0.1, 1, 10, 25, 100, 250}
 type Move struct {
 	at        util.Point
 	cross     [12]moondeck.Widget
+	script    chan string
 	step      float64
 	stepIndex int
 }
@@ -46,49 +51,69 @@ func NewMove(at util.Point) *Move {
 		at:        at,
 		step:      moveStepSizes[1],
 		stepIndex: 1,
+		script:    make(chan string, 8),
 	}
 	w.cross = [12]moondeck.Widget{
-		moondeck.NewIconWidget("arrow-up-left"),           // 00: move to back left
-		moondeck.NewIconWidget("arrow-up"),                // 01: move back
-		moondeck.NewIconWidget("arrow-up-right"),          // 02: move to back right
-		moondeck.NewIconWidget("arrow-up-from-bracket"),   // 03: move bed up
-		moondeck.NewIconWidget("arrow-left"),              // 04: move to left
-		moondeck.NewIconWidget("crosshairs"),              // 05: home
-		moondeck.NewIconWidget("arrow-right"),             // 06: move to right
-		nil,                                               // 07: tbd
-		moondeck.NewIconWidget("arrow-down-left"),         // 08: move to front left
-		moondeck.NewIconWidget("arrow-down"),              // 09: move to front
-		moondeck.NewIconWidget("arrow-down-right"),        // 10: move to front right
-		moondeck.NewIconWidget("arrow-down-from-bracket"), // 11: move bed down
+		moondeck.MustIconWidget("arrow-up-left"),           // 00: move to back left
+		moondeck.MustIconWidget("arrow-up"),                // 01: move back
+		moondeck.MustIconWidget("arrow-up-right"),          // 02: move to back right
+		moondeck.MustIconWidget("arrow-up-from-bracket"),   // 03: move bed up
+		moondeck.MustIconWidget("arrow-left"),              // 04: move to left
+		moondeck.MustIconWidget("crosshairs"),              // 05: home
+		moondeck.MustIconWidget("arrow-right"),             // 06: move to right
+		nil,                                                // 07: tbd
+		moondeck.MustIconWidget("arrow-down-left"),         // 08: move to front left
+		moondeck.MustIconWidget("arrow-down"),              // 09: move to front
+		moondeck.MustIconWidget("arrow-down-right"),        // 10: move to front right
+		moondeck.MustIconWidget("arrow-down-from-bracket"), // 11: move bed down
 	}
-	w.cross[0].(*moondeck.ImageWidget).OnPress = w.move(-1, -1, +0)
-	w.cross[1].(*moondeck.ImageWidget).OnPress = w.move(+0, -1, +0)
-	w.cross[2].(*moondeck.ImageWidget).OnPress = w.move(+1, -1, +0)
+	w.cross[0].(*moondeck.ImageWidget).OnPress = w.move(-1, +1, +0)
+	w.cross[1].(*moondeck.ImageWidget).OnPress = w.move(+0, +1, +0)
+	w.cross[2].(*moondeck.ImageWidget).OnPress = w.move(+1, +1, +0)
 	w.cross[3].(*moondeck.ImageWidget).OnPress = w.move(+0, +0, +1)
 
 	w.cross[4].(*moondeck.ImageWidget).OnPress = w.move(-1, +0, +0)
 	w.cross[5].(*moondeck.ImageWidget).OnPress = w.home
 	w.cross[6].(*moondeck.ImageWidget).OnPress = w.move(+1, +0, +0)
 	w.cross[7] = &moondeck.TextWidget{
-		Text:     strconv.FormatFloat(w.step, 'f', 0, 64),
+		Text:     "step\n" + strconv.FormatFloat(w.step, 'f', 0, 64),
 		Font:     font.RobotoBold,
 		FontSize: 16,
 	}
 	w.cross[7].(*moondeck.TextWidget).OnPress = w.stepChange
 
-	w.cross[8].(*moondeck.ImageWidget).OnPress = w.move(-1, +1, +0)
-	w.cross[9].(*moondeck.ImageWidget).OnPress = w.move(+0, +1, +0)
-	w.cross[10].(*moondeck.ImageWidget).OnPress = w.move(+1, +1, +0)
+	w.cross[8].(*moondeck.ImageWidget).OnPress = w.move(-1, -1, +0)
+	w.cross[9].(*moondeck.ImageWidget).OnPress = w.move(+0, -1, +0)
+	w.cross[10].(*moondeck.ImageWidget).OnPress = w.move(+1, -1, +0)
 	w.cross[11].(*moondeck.ImageWidget).OnPress = w.move(+0, +0, -1)
+
+	var once sync.Once
+	IsOnline(func(c *Client, _ error) {
+		once.Do(func() {
+			for script := range w.script {
+				if err := c.SendGCode(script); err != nil {
+					log.WithError(err).Error("move: failed to send script")
+				}
+			}
+		})
+	})
+
 	return w
 }
 
 func (w *Move) move(x, y, z float64) func(moondeck.Button, *moondeck.App) {
 	return func(b moondeck.Button, app *moondeck.App) {
-		x *= w.step
-		y *= w.step
-		z *= w.step
-		log.Printf("moonraker: move toolhead %f, %f, %f", x, y, z)
+		var script = []string{"G1"}
+		if x != 0 {
+			script = append(script, fmt.Sprintf("X%g", x*w.step))
+		}
+		if y != 0 {
+			script = append(script, fmt.Sprintf("Y%g", y*w.step))
+		}
+		if z != 0 {
+			script = append(script, fmt.Sprintf("Z%g", z*w.step))
+		}
+		w.script <- "G91\n" + strings.Join(script, " ") + "\n"
 	}
 }
 
@@ -123,6 +148,7 @@ func (w *Move) homeAxis(axis string) func(moondeck.Button, *moondeck.App) {
 	return func(b moondeck.Button, app *moondeck.App) {
 		app.CloseOverlay()
 		log.Println("moonraker: home", axis)
+		w.script <- strings.TrimSpace("G28 "+axis) + "\n"
 	}
 }
 
@@ -137,7 +163,7 @@ func (w *Move) stepChange(b moondeck.Button, app *moondeck.App) {
 	if w.step < 1 {
 		precision = 1
 	}
-	w.cross[7].(*moondeck.TextWidget).Text = strconv.FormatFloat(w.step, 'f', precision, 64)
+	w.cross[7].(*moondeck.TextWidget).Text = "step\n" + strconv.FormatFloat(w.step, 'f', precision, 64)
 
 	w.cross[7].(*moondeck.TextWidget).Dirty()
 }

@@ -2,21 +2,20 @@ package moonraker
 
 import (
 	"fmt"
-	"image"
 	"log"
-	"os"
+
+	"github.com/hashicorp/hcl/v2/hclsimple"
+
+	"maze.io/moondeck/gfx/background"
+	"maze.io/moondeck/gfx/icon"
+	"maze.io/moondeck/moondeck"
+	"maze.io/moondeck/util"
 
 	_ "image/gif"  // GIF codec
 	_ "image/jpeg" // JPEG codec
 	_ "image/png"  // PNG codec
 
 	_ "golang.org/x/image/bmp" // BMP codec
-
-	"github.com/hashicorp/hcl/v2/hclsimple"
-
-	"maze.io/moondeck/moondeck"
-	"maze.io/moondeck/moondeck/icon"
-	"maze.io/moondeck/util"
 )
 
 const (
@@ -24,10 +23,12 @@ const (
 )
 
 type Config struct {
-	Klipper *KlipperConfig  `hcl:"klipper,block"`
-	Menu    []*MenuConfig   `hcl:"menu,block"`
-	App     []*AppConfig    `hcl:"app,block"`
-	Preset  []*PresetConfig `hcl:"preset,optional"`
+	Klipper    *KlipperConfig  `hcl:"klipper,block"`
+	Loading    string          `hcl:"loading,optional"`
+	Connecting string          `hcl:"connecting,optional"`
+	Menu       []*MenuConfig   `hcl:"menu,block"`
+	App        []*AppConfig    `hcl:"app,block"`
+	Preset     []*PresetConfig `hcl:"preset,optional"`
 }
 
 type KlipperConfig struct {
@@ -59,24 +60,31 @@ type AppConfig struct {
 	Menu       *AppMenuConfig   `hcl:"menu,block"`
 	Icon       []*IconConfig    `hcl:"icon,block"`
 	Temp       []*TempConfig    `hcl:"temp,block"`
+	Camera     []*CameraConfig  `hcl:"camera,block"`
+	GCode      []*GCodeConfig   `hcl:"gcode,block"`
 	Emergency  *EmergencyConfig `hcl:"emergency,block"`
 	Move       *MoveConfig      `hcl:"move,block"`
-	Camera     *CameraConfig    `hcl:"camera,block"`
 }
 
 func (c *AppConfig) App(dash *moondeck.Dashboard, config *Config) (*moondeck.App, error) {
 	app := moondeck.NewApp(c.Name, dash)
 
 	if c.Background != "" {
-		f, err := os.Open(c.Background)
-		if err != nil {
-			return nil, fmt.Errorf("moonraker: could not open background image %q for icon %q", c.Background, c.Name)
-		}
-		defer func() { _ = f.Close() }()
+		/*
+			f, err := os.Open(c.Background)
+			if err != nil {
+				return nil, fmt.Errorf("moonraker: could not open background image %q for icon %q", c.Background, c.Name)
+			}
+			defer func() { _ = f.Close() }()
 
-		i, _, err := image.Decode(f)
+			i, _, err := image.Decode(f)
+			if err != nil {
+				return nil, fmt.Errorf("moonraker: could not load background image %q for icon %q", c.Background, c.Name)
+			}
+		*/
+		i, err := background.Logo(c.Background)
 		if err != nil {
-			return nil, fmt.Errorf("moonraker: could not load background image %q for icon %q", c.Background, c.Name)
+			return nil, fmt.Errorf("could not load background image %q for app %q", c.Background, c.Name)
 		}
 
 		app.SetBackgroundImage(i)
@@ -90,14 +98,17 @@ func (c *AppConfig) App(dash *moondeck.Dashboard, config *Config) (*moondeck.App
 		log.Println("moonraker: config temp", ct.Heater, "at", ct.At)
 		wcs = append(wcs, ct)
 	}
+	for _, cc := range c.Camera {
+		wcs = append(wcs, cc)
+	}
+	for _, cg := range c.GCode {
+		wcs = append(wcs, cg)
+	}
 	if c.Menu != nil {
 		wcs = append(wcs, widgetConfiguratorFunc(c.Menu.Widgets(config.Menu)))
 	}
 	if c.Move != nil {
 		wcs = append(wcs, widgetConfiguratorFunc(c.Move.Widgets))
-	}
-	if c.Camera != nil {
-		wcs = append(wcs, c.Camera)
 	}
 
 	for _, wc := range wcs {

@@ -38,6 +38,8 @@ func runList(ctx *cli.Context) error {
 		fmt.Println(d.Name())
 		fmt.Println("\tSerial: ", d.SerialNumber())
 		if ctx.Bool("verbose") {
+			fmt.Println("\tID:     ", d.ID())
+			fmt.Println("\tBrand:  ", d.Manufacturer())
 			fmt.Println("\tVersion:", d.Version())
 			fmt.Println("\tPath:   ", d.Path())
 		}

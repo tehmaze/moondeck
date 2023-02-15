@@ -36,6 +36,12 @@ type Deck interface {
 	// Version of the device.
 	Version() string
 
+	// Manufacturer of the device.
+	Manufacturer() string
+
+	// ID is the USB vendor and product ID.
+	ID() string
+
 	// SerialNumber of the device.
 	SerialNumber() string
 

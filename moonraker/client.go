@@ -150,6 +150,16 @@ func (c *Client) RestartFirmware() error {
 	return c.Request("printer.firmware_restart", nil, nil)
 }
 
+type GCodeScript struct {
+	Script string `json:"script"`
+}
+
+func (c *Client) SendGCode(script string) error {
+	log.WithField("script", script).Debug("send gcode script")
+	//var response string
+	return c.Request("printer.gcode.script", GCodeScript{Script: script}, nil)
+}
+
 type Query struct {
 	Objects map[string][]string `json:"objects"`
 }

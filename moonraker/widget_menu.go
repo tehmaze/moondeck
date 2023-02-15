@@ -40,8 +40,8 @@ type Menu struct {
 
 func NewMenu(iconName string, item []MenuItemConfig, fg, bg color.RGBA) *Menu {
 	w := &Menu{
-		menu: moondeck.NewIconWidget("bars"),
-		open: moondeck.NewIconWidget("bars-staggered"),
+		menu: moondeck.MustIconWidget("bars"),
+		open: moondeck.MustIconWidget("bars-staggered"),
 	}
 
 	w.open.OnPress = func(_ moondeck.Button, app *moondeck.App) {

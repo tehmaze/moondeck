@@ -4,7 +4,7 @@ import (
 	"image/color"
 	"testing"
 
-	"github.com/tv42/quobar/blend"
+	"maze.io/moondeck/gfx/blend"
 )
 
 var (

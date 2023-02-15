@@ -28,7 +28,7 @@ preset = [
 ]
 
 app "home" {
-  background = "klipper-logo-5x3.png"
+  background = "klipper.png"
 
   emergency {
     at = {x: 0, y: 2}
@@ -37,6 +37,15 @@ app "home" {
 
   menu "home" {
     at = {x: 0, y: 0}
+  }
+
+  gcode "motors-off" {
+    at = {x: 0, y: 1}
+    icon = "motor-off"
+    gcode = <<END
+  M84
+  M117 Motors off
+  END
   }
 
   icon "extruder" {
@@ -63,7 +72,7 @@ app "home" {
 }
 
 app "move" {
-  background = "klipper-logo-5x3.png"
+  background = "klipper.png"
 
   emergency {
     at = {x: 0, y: 2}

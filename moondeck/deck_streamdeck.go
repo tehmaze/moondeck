@@ -6,12 +6,13 @@ import (
 	"image"
 	"image/color"
 	"image/jpeg"
-	"log"
 	"time"
 
 	"github.com/disintegration/gift"
 	"github.com/karalabe/hid"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/image/draw"
+
 	"maze.io/moondeck/util"
 )
 
@@ -186,7 +187,16 @@ func (d *streamDeck) Size() util.Size {
 }
 
 func (d *streamDeck) Open() (err error) {
-	d.dev, err = d.info.Open()
+	if d.dev, err = d.info.Open(); err == nil {
+		log.WithFields(log.Fields{
+			"name":         d.name,
+			"vendor_id":    d.info.VendorID,
+			"product_id":   d.info.ProductID,
+			"serial":       d.info.Serial,
+			"manufacturer": d.info.Manufacturer,
+			"product":      d.info.Product,
+		}).Debug("stream deck opened")
+	}
 	return
 }
 
@@ -207,6 +217,14 @@ func (d *streamDeck) Version() string {
 		return ""
 	}
 	return string(r[d.firmwareOffset:])
+}
+
+func (d *streamDeck) Manufacturer() string {
+	return d.info.Manufacturer
+}
+
+func (d *streamDeck) ID() string {
+	return fmt.Sprintf("%04x:%04x", d.info.VendorID, d.info.ProductID)
 }
 
 func (d *streamDeck) SerialNumber() string {
@@ -277,8 +295,6 @@ func (d *streamDeck) ButtonEvents() <-chan ButtonEvent {
 					j = d.translateKey(j, uint8(d.cols))
 				}
 				if b[i] != d.buttonState[j] {
-					log.Printf("moondeck: stream deck button %d: %x", j, b[i])
-
 					var (
 						duration time.Duration
 						pressed  = b[i] == 1
@@ -290,6 +306,12 @@ func (d *streamDeck) ButtonEvents() <-chan ButtonEvent {
 					} else {
 						duration = time.Since(d.buttonPress[j])
 					}
+
+					log.WithFields(log.Fields{
+						"index":    j,
+						"pressed":  pressed,
+						"duration": duration,
+					}).Debug("stream deck button")
 
 					c <- ButtonEvent{
 						Button:   d.button[j],

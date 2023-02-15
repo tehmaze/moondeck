@@ -5,8 +5,8 @@ import (
 
 	"github.com/mazznoer/csscolorparser"
 
+	"maze.io/moondeck/gfx/icon"
 	"maze.io/moondeck/moondeck"
-	"maze.io/moondeck/moondeck/icon"
 	"maze.io/moondeck/util"
 )
 

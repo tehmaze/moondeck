@@ -7,9 +7,10 @@ import (
 	"strconv"
 
 	"github.com/golang/freetype/truetype"
-	"maze.io/moondeck/moondeck/icon"
 
-	builtin "maze.io/moondeck/moondeck/font"
+	"maze.io/moondeck/gfx"
+	builtin "maze.io/moondeck/gfx/font"
+	"maze.io/moondeck/gfx/icon"
 )
 
 type Widget interface {
@@ -66,15 +67,29 @@ func NewImageWidget(i image.Image) *ImageWidget {
 	return w
 }
 
-func NewIconWidget(name string) *ImageWidget {
-	w := &ImageWidget{}
-	w.Update(icon.Must(name))
+func NewIconWidget(name string) (*ImageWidget, error) {
+	i, err := icon.Icon(name)
+	if err != nil {
+		return nil, err
+	}
+
+	w := new(ImageWidget)
+	w.Update(i)
+
+	return w, nil
+}
+
+func MustIconWidget(name string) *ImageWidget {
+	w, err := NewIconWidget(name)
+	if err != nil {
+		panic(err)
+	}
 	return w
 }
 
 func NewIconColorWidget(name string, fg, bg color.RGBA) *ImageWidget {
 	w := &ImageWidget{}
-	w.Update(icon.Colorize(icon.Must(name), fg, bg))
+	w.Update(gfx.Colorize(icon.Must(name), fg, bg))
 	return w
 }
 

@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"strings"
 	"time"
 
 	"github.com/golang/freetype"
@@ -11,8 +12,8 @@ import (
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 
-	builtin "maze.io/moondeck/moondeck/font"
-	"maze.io/moondeck/moondeck/icon"
+	builtin "maze.io/moondeck/gfx/font"
+	"maze.io/moondeck/gfx/icon"
 	"maze.io/moondeck/util"
 )
 
@@ -131,15 +132,33 @@ func (t *Text) Render(b Button, text string, fg, bg color.Color) error {
 		Src:  image.NewUniform(fg),
 		Face: fontFace,
 	}
-	textBounds, _ := fontDraw.BoundString(text)
-	xPosition := (fixed.I(s.W) - fontDraw.MeasureString(text)) / 2
-	textHeight := textBounds.Max.Y - textBounds.Min.Y
-	yPosition := fixed.I((s.H)-textHeight.Ceil())/2 + fixed.I(textHeight.Ceil())
-	fontDraw.Dot = fixed.Point26_6{
-		X: xPosition,
-		Y: yPosition,
+
+	var (
+		metrics    = fontFace.Metrics()
+		textHeight = metrics.Ascent + metrics.Descent
+		part       = strings.Split(text, "\n")
+		y          = (fixed.I(s.H) - textHeight.Mul(fixed.I(len(part)))) // 2
+	)
+	for _, line := range part {
+		//b, _ := fontDraw.BoundString(line)
+		x := (fixed.I(s.W) - fontDraw.MeasureString(line)) / 2
+		//h := b.Max.Y - b.Min.Y
+		fontDraw.Dot = fixed.Point26_6{X: x, Y: y}
+		fontDraw.DrawString(line)
+		y += textHeight
 	}
-	fontDraw.DrawString(text)
+
+	/*
+		textBounds, _ := fontDraw.BoundString(text)
+		xPosition := (fixed.I(s.W) - fontDraw.MeasureString(text)) / 2
+		textHeight := textBounds.Max.Y - textBounds.Min.Y
+		yPosition := fixed.I((s.H)-textHeight.Ceil())/2 + fixed.I(textHeight.Ceil())
+		fontDraw.Dot = fixed.Point26_6{
+			X: xPosition,
+			Y: yPosition,
+		}
+		fontDraw.DrawString(text)
+	*/
 
 	return b.SetImage(i)
 }
