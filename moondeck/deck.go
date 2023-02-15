@@ -1,8 +1,5 @@
 package moondeck
 
-// #cgo CFLAGS: -Wno-deprecated
-import "C"
-
 import (
 	"errors"
 	"image"
