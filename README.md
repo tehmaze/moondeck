@@ -1,5 +1,7 @@
 # moondeck
 
+[![Go](https://github.com/tehmaze/moondeck/actions/workflows/go.yml/badge.svg?branch=dev)](https://github.com/tehmaze/moondeck/actions/workflows/go.yml)
+
 Stream Deck (compatible) interface for Klipper and Moonraker API.
 
 ## Support

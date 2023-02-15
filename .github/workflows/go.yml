@@ -25,16 +25,23 @@ jobs:
       run:  mkdir -p build
 
     - name: Build Linux (x86_64)
-      run:  CFLAGS=-Wno-deprecated GOOS=linux  GOARCH=amd64       go build -v -o build/moondeck
+      run:  CFLAGS=-Wno-deprecated GOOS=linux  GOARCH=amd64       go build -o build/moondeck
 
     - name: Build Linux (armv5, Raspberry Pi 1)
-      run:  CFLAGS=-Wno-deprecated GOOS=linux  GOARCH=arm GOARM=5 go build -v -o build/moondeck.arm5
+      run:  CFLAGS=-Wno-deprecated GOOS=linux  GOARCH=arm GOARM=5 go build -o build/moondeck.arm5
 
     - name: Build Linux (armv6, Raspberry Pi 2+)
-      run:  CFLAGS=-Wno-deprecated GOOS=linux  GOARCH=arm GOARM=6 go build -v -o build/moondeck.arm6
+      run:  CFLAGS=-Wno-deprecated GOOS=linux  GOARCH=arm GOARM=6 go build -o build/moondeck.arm6
 
     - name: Build macOS (Apple silicon)
-      run : CFLAGS=-Wno-deprecated GOOS=darwin GOARCH=arm64       go build -v -o build/moondeck.macos
+      run : CFLAGS=-Wno-deprecated GOOS=darwin GOARCH=arm64       go build -o build/moondeck.macos
 
     - name: Build macOS (Intel)
-      run:  CFLAGS=-Wno-deprecated GOOS=darwin GOARCH=amd64       go build -v -o build/moondeck.macosx86
+      run:  CFLAGS=-Wno-deprecated GOOS=darwin GOARCH=amd64       go build -o build/moondeck.macosx86
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build
+        path: build/
+        if-no-files-found: error
